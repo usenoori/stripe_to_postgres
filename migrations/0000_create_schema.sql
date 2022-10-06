@@ -308,11 +308,14 @@ create table if not exists stripe.coupons
 );
 
 create type stripe.disputes_status as enum (
+    'warning_needs_response',
+    'warning_under_review',
+    'warning_closed',
+    'needs_response',
+    'under_review',
+    'charge_refunded',
     'won',
-    'lost',
-    'submitted',
-    'unsubmitted',
-    'expired'
+    'lost'
     );
 
 create table if not exists stripe.disputes
