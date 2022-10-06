@@ -1,6 +1,5 @@
 import Stripe from 'stripe'
 import { getConfig } from './config'
-import { pg as sql } from 'yesql'
 import { query } from './connection'
 
 const config = getConfig()
@@ -9,22 +8,43 @@ export const constructUpsertSql = (
   schema: string,
   table: string,
   columns: string[],
+  rows: Object[],
   options?: {
     conflict?: string
   }
-): string => {
+): { text: string; values: string[] } => {
   const { conflict = 'id' } = options || {}
 
-  return `
+  // language=txt
+  const text = `
         insert into "${schema}"."${table}" (${columns
     .map((x) => `"${x}"`)
     .join(',')})
-        values (${columns.map((x) => `:${x}`).join(',')})
+        values
+        ${rows
+          .map(
+            (_, i) =>
+              `(${columns
+                .map(
+                  (x, j) =>
+                    `$${columns.length * (i + 1) - (columns.length - 1 - j)}`
+                )
+                .join(',')})`
+          )
+          .join(',')}
         on conflict (
-            ${conflict}
-            )
-            do update set ${columns.map((x) => `"${x}" = :${x}`).join(',')}
-        ;`
+        ${conflict}
+        )
+        do update set ${columns
+          .map((x) => `"${x}" = excluded.${x}`)
+          .join(',')};`
+
+  const values = rows.flatMap((row) => {
+    const sanitized = cleanseArrayField(row)
+    return columns.map((column) => sanitized[column])
+  })
+
+  return { text, values }
 }
 
 export const cleanseArrayField = (obj: {
@@ -45,15 +65,11 @@ export const cleanseArrayField = (obj: {
 export const upsert = async <T extends { [Key: string]: any }>(
   table: string,
   columns: string[],
-  data: T
+  rows: T[]
 ): Promise<T[]> => {
-  const upsertString = constructUpsertSql('stripe', table, columns)
-
-  const cleansed = cleanseArrayField(data)
-  const prepared = sql(upsertString)(cleansed)
-
-  const { rows } = await query(prepared.text, prepared.values)
-  return rows
+  const { text, values } = constructUpsertSql('stripe', table, columns, rows)
+  const result = await query(text, values)
+  return result.rows
 }
 
 async function getColumns(table: string) {
@@ -74,20 +90,20 @@ async function upsertRecords<T extends { [Key: string]: any }>(
   const columns = await getColumns(table)
 
   console.log(`Upserting ${table}`)
-  let counter = 0
+  const rows = []
   for await (const record of resource) {
     // Keep only fields that we handle
-    const data = Object.fromEntries(
+    const row = Object.fromEntries(
       columns.reduce((entries, column) => {
         entries.push([column, record[column]])
         return entries
       }, [] as Array<[string, { [Key: string]: any }]>)
     )
-
-    await upsert(table, columns, data)
-    counter++
+    rows.push(row)
   }
-  console.log(`Upserted ${counter} ${table}`)
+  await upsert(table, columns, rows)
+
+  console.log(`Upserted ${rows.length} ${table}`)
 }
 
 export async function runSync() {
