@@ -14,7 +14,7 @@ async function connectAndMigrate(
     connectionTimeoutMillis: 1000,
   }
   const optionalConfig = {
-    schemaName: config.DATABASE_SCHEMA,
+    schemaName: 'stripe',
     tableName: 'migrations',
   }
 

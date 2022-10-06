@@ -1,8 +1,10 @@
 import { runMigrations } from './migrate'
+import { runSync } from './sync'
 
 const main = async () => {
-  // Run migrations
   await runMigrations()
+
+  await runSync()
 }
 
 main()
