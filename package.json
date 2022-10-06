@@ -24,11 +24,13 @@
   "dependencies": {
     "@whollacsek/pg-node-migrations": "^0.0.8",
     "dotenv": "^16.0.3",
+    "lodash.chunk": "^4.2.0",
     "pg": "^8.8.0",
     "stripe": "^10.12.0",
     "yesql": "^5.0.0"
   },
   "devDependencies": {
+    "@types/lodash.chunk": "^4.2.7",
     "@types/node": "^18.8.0",
     "@types/pg": "^8.6.5",
     "@types/yesql": "^4.1.1",

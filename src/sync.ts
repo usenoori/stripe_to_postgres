@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 import { getConfig } from './config'
 import { query } from './connection'
+import chunk from 'lodash.chunk'
 
 const config = getConfig()
 
@@ -14,6 +15,7 @@ export const constructUpsertSql = (
   }
 ): { text: string; values: string[] } => {
   const { conflict = 'id' } = options || {}
+  const values: string[] = []
 
   // language=txt
   const text = `
@@ -22,15 +24,15 @@ export const constructUpsertSql = (
     .join(',')})
         values
         ${rows
-          .map(
-            (_, i) =>
-              `(${columns
-                .map(
-                  (x, j) =>
-                    `$${columns.length * (i + 1) - (columns.length - 1 - j)}`
-                )
-                .join(',')})`
-          )
+          .map((row, i) => {
+            const sanitized = cleanseArrayField(row)
+            return `(${columns
+              .map((column, j) => {
+                values.push(sanitized[column])
+                return `$${columns.length * (i + 1) - (columns.length - 1 - j)}`
+              })
+              .join(',')})`
+          })
           .join(',')}
         on conflict (
         ${conflict}
@@ -38,11 +40,6 @@ export const constructUpsertSql = (
         do update set ${columns
           .map((x) => `"${x}" = excluded.${x}`)
           .join(',')};`
-
-  const values = rows.flatMap((row) => {
-    const sanitized = cleanseArrayField(row)
-    return columns.map((column) => sanitized[column])
-  })
 
   return { text, values }
 }
@@ -101,7 +98,10 @@ async function upsertRecords<T extends { [Key: string]: any }>(
     )
     rows.push(row)
   }
-  await upsert(table, columns, rows)
+
+  for (const chunkedRows of chunk(rows, 100)) {
+    await upsert(table, columns, chunkedRows)
+  }
 
   console.log(`Upserted ${rows.length} ${table}`)
 }
