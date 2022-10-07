@@ -10,17 +10,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/whollacsek/stripe_to_postgres.git"
+    "url": "git+https://github.com/usenoori/stripe_to_postgres.git"
   },
   "keywords": [
     "Stripe",
     "Postgres"
   ],
-  "author": "whollacsek",
+  "author": "usenoori",
   "bugs": {
-    "url": "https://github.com/whollacsek/stripe_to_postgres/issues"
+    "url": "https://github.com/usenoori/stripe_to_postgres/issues"
   },
-  "homepage": "https://github.com/whollacsek/stripe_to_postgres#readme",
+  "homepage": "https://github.com/usenoori/stripe_to_postgres#readme",
   "dependencies": {
     "@whollacsek/pg-node-migrations": "^0.0.8",
     "dotenv": "^16.0.3",
