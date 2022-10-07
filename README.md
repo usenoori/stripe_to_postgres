@@ -1,5 +1,9 @@
 # stripe_to_postgres
 
+## Why we exist
+
+We built Noori after working on multiple startups, where we had to rewrite the same code each time. We thought there should be an easier solution. After looking around we realized no one was building it..so we build it! 
+
 ## Usage
 
 `stripe_to_postgres` is packaged as a Docker image you can run directly.
@@ -34,3 +38,8 @@ structures. These are the Stripe resources that are currently handled by us.
 
 - Start local Postgres instance: `docker compose up`
 - `npm run dev`
+
+## Contact
+Questions? Comments? Email us at hello@usenoori.com
+
+
