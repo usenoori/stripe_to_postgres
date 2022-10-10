@@ -17,6 +17,11 @@ Example:
 
 - Put the env vars in a .env file then run `docker run --env-file=.env usenoori/stripe_to_postgres`
 
+### Update your Postgres search_path
+
+By default, most database tools only look up database objects in the `public` schema, you might need to update
+the `search_path` in your existing tooling to include the `stripe` schema we created for you.
+
 ## How does it work?
 
 `stripe_to_postgres` calls Stripe and page through your Stripe data and
