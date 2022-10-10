@@ -34,6 +34,11 @@ structures. These are the Stripe resources that are currently handled by us.
 - disputes
 - plans
 
+## Requirements
+
+At the moment we support Postgres from version 10, as the features evolve this support target could move towards
+Postgres 12.
+
 ## Development
 
 - Start local Postgres instance: `docker compose up`
