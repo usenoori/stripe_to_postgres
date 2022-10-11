@@ -12,6 +12,7 @@ The image needs the following environment variables.
 
 - `DATABASE_URL` is your Postgres instance's connection string.
 - `STRIPE_SECRET_KEY` can be obtained from the Stripe dashboard https://dashboard.stripe.com/apikeys.
+- `WEBHOOK_URL` is your https enabled endpoint where this image is deployed.
 
 Example:
 
@@ -24,9 +25,11 @@ the `search_path` in your existing tooling to include the `stripe` schema we cre
 
 ## How does it work?
 
-`stripe_to_postgres` calls Stripe and page through your Stripe data and
-stores them in your Postgres database. It will first create a `stripe` schema then create all the necessary table
-structures. These are the Stripe resources that are currently handled by us.
+1. `stripe_to_postgres` will first create a `stripe` schema then create all the necessary table structures in your database.
+2. Then it will call Stripe and page through your Stripe data to stores them in your database.
+3. After the data sync is done a Stripe webhook will be created that keep your database up to date.
+
+These are the Stripe resources that are currently handled by us.
 
 - events
 - products
@@ -46,8 +49,9 @@ Postgres 12.
 
 ## Development
 
-- Start local Postgres instance: `docker compose up`
-- `npm run dev`
+1. Start local Postgres instance: `docker compose up`
+2. Start tunnel to expose your local port `npx localtunnel --port 3000` and use the generated url for `WEBHOOK_URL` env var
+3. Start development server `npm run dev`
 
 ## Contact
 Questions? Comments? Email us at hello@usenoori.com
