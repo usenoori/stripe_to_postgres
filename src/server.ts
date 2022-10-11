@@ -1,10 +1,21 @@
 import { runMigrations } from './migrate'
 import { runSync } from './sync'
+import { getConfig } from './config'
+
+const config = getConfig()
 
 const main = async () => {
-  await runMigrations()
+  if (config.SKIP_MIGRATIONS === 'true') {
+    console.log('Skipping migrations')
+  } else {
+    await runMigrations()
+  }
 
-  await runSync()
+  if (config.SKIP_SYNC === 'true') {
+    console.log('Skipping sync')
+  } else {
+    await runSync()
+  }
 }
 
 main()

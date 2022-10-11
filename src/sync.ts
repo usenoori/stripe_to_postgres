@@ -1,9 +1,7 @@
 import Stripe from 'stripe'
-import { getConfig } from './config'
 import { query } from './connection'
 import chunk from 'lodash.chunk'
-
-const config = getConfig()
+import { stripe } from './stripe'
 
 export const constructUpsertSql = (
   schema: string,
@@ -107,10 +105,6 @@ async function upsertRecords<T extends { [Key: string]: any }>(
 }
 
 export async function runSync() {
-  const stripe = new Stripe(config.STRIPE_SECRET_KEY, {
-    apiVersion: '2022-08-01',
-  })
-
   await upsertRecords('products', stripe.products.list({ limit: 100 }))
   await upsertRecords('prices', stripe.prices.list({ limit: 100 }))
   await upsertRecords('customers', stripe.customers.list({ limit: 100 }))
