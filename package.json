@@ -25,6 +25,7 @@
     "@whollacsek/pg-node-migrations": "^0.0.8",
     "dotenv": "^16.0.3",
     "lodash.chunk": "^4.2.0",
+    "micro": "9.4.0",
     "pg": "^8.8.0",
     "stripe": "^10.12.0"
   },

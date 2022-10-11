@@ -1,6 +1,7 @@
 import { runMigrations } from './migrate'
 import { runSync } from './sync'
 import { getConfig } from './config'
+import { startWebhook } from './webhook'
 
 const config = getConfig()
 
@@ -16,6 +17,8 @@ const main = async () => {
   } else {
     await runSync()
   }
+
+  startWebhook()
 }
 
 main()
