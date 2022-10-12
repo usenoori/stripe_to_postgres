@@ -3,30 +3,8 @@ import http from 'http'
 import serve, { buffer, send, sendError } from 'micro'
 import Stripe from 'stripe'
 import { stripe } from './stripe'
-
-const config = getConfig()
-
-function makeServer(webhookSecret: string) {
-  return new http.Server(
-    serve(async (req, res) => {
-      const sig = req.headers['stripe-signature'] as string
-      const body = await buffer(req)
-
-      try {
-        const event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
-        console.log(event.type)
-        switch (event.type) {
-          default:
-            throw new Error('Unhandled webhook event')
-        }
-
-        await send(res, 200)
-      } catch (err) {
-        await sendError(req, res, err)
-      }
-    })
-  )
-}
+import { filterRecord, Record } from './utils'
+import { getColumns, upsert } from './connection'
 
 const WEBHOOK_API_VERSION = '2022-08-01'
 
@@ -48,11 +26,84 @@ const enabled_events: Array<Stripe.WebhookEndpointCreateParams.EnabledEvent> = [
   'invoice.updated',
   'product.created',
   'product.updated',
-  'product.deleted',
+  // 'product.deleted',
   'price.created',
   'price.updated',
-  'price.deleted',
+  // 'price.deleted',
 ]
+
+const config = getConfig()
+
+async function upsertRecord(table: string, record: Record) {
+  const columns = await getColumns(table)
+  const row = filterRecord(record, columns)
+  await upsert(table, columns, [row])
+}
+
+function makeServer(webhookSecret: string) {
+  return new http.Server(
+    serve(async (req, res) => {
+      const sig = req.headers['stripe-signature'] as string
+      const body = await buffer(req)
+
+      try {
+        const event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
+        await upsertRecord('events', event)
+        console.log(`Handling event ${event.type} ${event.id}`)
+        switch (event.type) {
+          case 'charge.failed':
+          case 'charge.refunded':
+          case 'charge.succeeded': {
+            const charge = event.data.object as Stripe.Charge
+            await upsertRecord('charges', charge)
+            break
+          }
+          case 'customer.created':
+          case 'customer.updated': {
+            const customer = event.data.object as Stripe.Customer
+            await upsertRecord('customers', customer)
+            break
+          }
+          case 'customer.subscription.created':
+          case 'customer.subscription.deleted':
+          case 'customer.subscription.updated': {
+            const subscription = event.data.object as Stripe.Subscription
+            await upsertRecord('subscriptions', subscription)
+            break
+          }
+          case 'invoice.created':
+          case 'invoice.finalized':
+          case 'invoice.paid':
+          case 'invoice.payment_failed':
+          case 'invoice.payment_succeeded':
+          case 'invoice.updated': {
+            const invoice = event.data.object as Stripe.Invoice
+            await upsertRecord('invoices', invoice)
+            break
+          }
+          case 'product.created':
+          case 'product.updated': {
+            const product = event.data.object as Stripe.Product
+            await upsertRecord('products', product)
+            break
+          }
+          case 'price.created':
+          case 'price.updated': {
+            const price = event.data.object as Stripe.Price
+            await upsertRecord('prices', price)
+            break
+          }
+          default:
+            console.log('Unhandled webhook event')
+        }
+
+        await send(res, 200)
+      } catch (err) {
+        await sendError(req, res, err)
+      }
+    })
+  )
+}
 
 async function getOrCreateWebhook() {
   const webhookEndpoints = await stripe.webhookEndpoints
