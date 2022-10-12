@@ -1,6 +1,6 @@
 {
   "name": "stripe_to_postgres",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sync Stripe to Postgres",
   "main": "index.js",
   "scripts": {
