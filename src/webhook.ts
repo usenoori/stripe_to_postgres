@@ -67,7 +67,7 @@ async function getOrCreateWebhook() {
     console.log(`Creating webhook ${config.WEBHOOK_URL}`)
     const { id, secret } = await stripe.webhookEndpoints.create({
       api_version: WEBHOOK_API_VERSION,
-      url: config.WEBHOOK_URL,
+      url: config.WEBHOOK_URL as string,
       metadata: { creator: 'stripe_to_postgres' },
       description: 'stripe_to_postgres webhook',
       enabled_events,
@@ -107,8 +107,14 @@ async function getOrCreateWebhook() {
 }
 
 export async function startWebhook() {
-  const webhookEndpoint = await getOrCreateWebhook()
-  const { secret } = webhookEndpoint.metadata
+  let secret: string
+  if (config.NODE_ENV === 'production') {
+    const webhookEndpoint = await getOrCreateWebhook()
+    const { secret: webhookSecret } = webhookEndpoint.metadata
+    secret = webhookSecret
+  } else {
+    secret = config.STRIPE_WEBHOOK_SECRET as string
+  }
   makeServer(secret).listen(config.PORT, () => {
     console.log(`Webhook listening on ${config.PORT}`)
   })

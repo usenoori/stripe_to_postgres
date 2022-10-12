@@ -50,7 +50,7 @@ Postgres 12.
 ## Development
 
 1. Start local Postgres instance: `docker compose up`
-2. Start tunnel to expose your local port `npx localtunnel --port 3000` and use the generated url for `WEBHOOK_URL` env var
+2. Run `stripe listen --forward-to localhost:3000` and add the output secret as `STRIPE_WEBHOOK_SECRET` env var
 3. Start development server `npm run dev`
 
 ## Contact
